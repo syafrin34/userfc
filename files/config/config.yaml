@@ -1,0 +1,14 @@
+app:
+  port: 8080
+database:
+  host: localhost
+  user: postgres
+  password: password
+  name: postgres
+  port: 5432
+redis:
+  host: 127.0.0.1
+  port: 6379
+  password: 
+secret: 
+  jwt_secret: "53creT!"
