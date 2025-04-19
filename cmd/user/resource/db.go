@@ -2,7 +2,7 @@ package resource
 
 import (
 	"fmt"
-	//stdLog "log"
+	stdLog "log"
 	"userfc/config"
 
 	"gorm.io/driver/postgres"
@@ -19,8 +19,8 @@ func InitDB(cfg *config.Config) *gorm.DB {
 	})
 
 	if err != nil {
-		//stdLog.Fatal("failed to connect to DB %v", err)
+		stdLog.Printf("failed to connect to DB %v", err)
 	}
-	//stdLog.Println("connected to DB")
+	stdLog.Println("connected to DB")
 	return db
 }

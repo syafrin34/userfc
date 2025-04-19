@@ -3,7 +3,7 @@ app:
 database:
   host: localhost
   user: postgres
-  password: password
+  password: postgres
   name: postgres
   port: 5432
 redis:
