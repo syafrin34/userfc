@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"userfc/cmd/user/handler"
 	"userfc/cmd/user/repository"
 	"userfc/cmd/user/resource"
@@ -29,6 +30,7 @@ func main() {
 	router := gin.Default()
 	routes.SetupRoutes(router, *userHandler, cfg.Secret.JWTSecret)
 	router.Run(":" + port)
+	fmt.Println("sekarang server berjalan di port : ", port)
 	logger.Logger.Printf("Server running on port : %s", port)
 
 	// router := gin.Default()
