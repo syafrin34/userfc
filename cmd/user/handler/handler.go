@@ -7,13 +7,14 @@ import (
 	"userfc/models"
 
 	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/otel"
 )
 
 type UserHandler struct {
-	UserUseCase usecase.UserUsecase
+	UserUseCase *usecase.UserUsecase
 }
 
-func NewUserHandler(userUseCase usecase.UserUsecase) *UserHandler {
+func NewUserHandler(userUseCase *usecase.UserUsecase) *UserHandler {
 	return &UserHandler{
 		UserUseCase: userUseCase,
 	}
@@ -63,7 +64,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 		return
 	}
 
-	err = h.UserUseCase.RegisteUser(c.Request.Context(), &models.User{
+	err = h.UserUseCase.RegisterUser(c.Request.Context(), &models.User{
 		Name:     param.Name,
 		Email:    param.Email,
 		Password: param.Password,
@@ -85,12 +86,17 @@ func (h *UserHandler) Ping(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "OK"})
 }
 func (h *UserHandler) Login(c *gin.Context) {
+	trace := otel.Tracer("userfchandler")
+	ctx, span := trace.Start(c.Request.Context(), "HandleLogin")
+	defer span.End()
 	var param models.LoginParameter
 	if err := c.ShouldBindJSON(&param); err != nil {
 		logger.Logger.Info(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error_mmessage": "Invalid input parameter",
 		})
+
+		return
 
 	}
 
@@ -102,12 +108,27 @@ func (h *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	token, err := h.UserUseCase.Login(c.Request.Context(), &param)
+	user, err := h.UserUseCase.GetUserByEmail(ctx, param.Email)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error_message": err.Error(),
+		})
+		return
+	}
+	if user.ID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error_message": "Email not Found",
+		})
+		return
+	}
+
+	token, err := h.UserUseCase.Login(ctx, param, user.ID, user.Password)
 	if err != nil {
 		logger.Logger.Error(err.Error())
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "Email atau Password salah",
 		})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -132,7 +153,7 @@ func (h *UserHandler) GetUserInfo(c *gin.Context) {
 		})
 	}
 
-	user, err := h.UserUseCase.GetUserID(c.Request.Context(), int64(userID))
+	user, err := h.UserUseCase.GetUserByID(c.Request.Context(), int64(userID))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error message ": "user not found",

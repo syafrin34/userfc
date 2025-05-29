@@ -12,6 +12,7 @@ import (
 	"userfc/infrastructure/logger"
 	"userfc/proto/userpb"
 	"userfc/routes"
+	"userfc/trace"
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
@@ -23,11 +24,11 @@ func main() {
 	redis := resource.InitRedis(&cfg)
 	db := resource.InitDB(&cfg)
 	logger.SetupLogger()
-
+	trace.InitTracer("userfc")
 	userRepository := repository.NewUserRepository(db, redis)
-	userService := service.NewUserService(*userRepository)
-	userUseCase := usecase.NewUserUseCase(*userService, cfg.Secret.JWTSecret)
-	userHandler := handler.NewUserHandler(*userUseCase)
+	userService := service.NewUserService(userRepository)
+	userUseCase := usecase.NewUserUseCase(userService, cfg.Secret.JWTSecret)
+	userHandler := handler.NewUserHandler(userUseCase)
 
 	go func() {
 		port := cfg.App.Port // baca ke config yang sudah kita load diawal

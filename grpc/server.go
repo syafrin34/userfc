@@ -12,7 +12,7 @@ type GRPCServer struct {
 }
 
 func (s *GRPCServer) GetUserInfoByUserID(ctx context.Context, req *userpb.GetUserInfoRequest) (*userpb.GetUserInfoResult, error) {
-	userInfo, err := s.UserUsecase.GetUserID(ctx, req.UserId)
+	userInfo, err := s.UserUsecase.GetUserByID(ctx, req.UserId)
 	if err != nil {
 		return nil, err
 	}
